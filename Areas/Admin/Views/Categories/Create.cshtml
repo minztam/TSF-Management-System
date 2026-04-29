@@ -1,0 +1,124 @@
+﻿@model QuanLyQuanAn.Web.Areas.Admin.Models.Categories.RequestDTO
+
+@{
+    ViewData["Title"] = "Thêm danh mục mới";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-form.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+}
+
+<div class="container-fluid">
+    @* Căn giữa phần tiêu đề *@
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 mb-4 mt-2">
+            <h1 class="h4 mb-0 text-gray-800 font-weight-bold">
+                <i class="bi bi-tag-fill mr-2"></i> THÊM DANH MỤC MỚI
+            </h1>
+            <p class="text-muted small">Tạo các nhóm món ăn mới để quản lý thực đơn Trung Sơn Food.</p>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        @* THÊM CLASS justify-content-center Ở ĐÂY *@
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm-custom card-form border-0">
+                <div class="card-body p-4">
+                    <form id="formCreateCategory">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                        <div class="form-group mb-4">
+                            <label asp-for="Name" class="font-weight-bold mb-2">Tên danh mục</label>
+                            <input asp-for="Name" class="form-control form-control-custom" placeholder="Ví dụ: Hải sản, Món nướng..." />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="DisplayOrder" class="font-weight-bold mb-2">Thứ tự hiển thị</label>
+                                    <input asp-for="DisplayOrder" type="number" class="form-control form-control-custom" value="1" />
+                                    <span asp-validation-for="DisplayOrder" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="d-block font-weight-bold mb-2">Trạng thái</label>
+                                    <div class="custom-control custom-switch mt-2">
+                                        <input type="checkbox" class="custom-control-input" asp-for="IsActive" id="IsActiveSwitch" checked>
+                                        <label class="custom-control-label" for="IsActiveSwitch">Đang kinh doanh</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a asp-action="Index" class="btn-back mr-2 text-decoration-none">Hủy bỏ</a>
+                            <button type="button" id="btnSubmit" class="btn-save shadow-sm px-4">
+                                <i class="bi bi-check-lg mr-1"></i> Lưu danh mục
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function () {
+            $('#btnSubmit').click(function () {
+                const btn = $(this);
+                const form = $('#formCreateCategory');
+
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-2"></span> Đang lưu...');
+
+                $.ajax({
+                    url: '@Url.Action("Create", "Categories")',
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (res) {
+                        if (res.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Thành công',
+                                text: res.message,
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = '@Url.Action("Index", "Categories")';
+                            });
+                        } else {
+                            let errorHtml = '<ul class="text-left text-danger">';
+                            if (res.errors) {
+                                res.errors.forEach(err => { errorHtml += `<li>${err}</li>`; });
+                            } else {
+                                errorHtml += `<li>${res.message}</li>`;
+                            }
+                            errorHtml += '</ul>';
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Có lỗi xảy ra',
+                                html: errorHtml
+                            });
+                            btn.prop('disabled', false).html('<i class="bi bi-check-lg mr-1"></i> Lưu danh mục');
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Lỗi!', 'Không thể kết nối đến máy chủ.', 'error');
+                        btn.prop('disabled', false).html('<i class="bi bi-check-lg mr-1"></i> Lưu danh mục');
+                    }
+                });
+            });
+        });
+    </script>
+}

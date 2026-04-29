@@ -1,0 +1,442 @@
+﻿@using UserEntity = QuanLyQuanAn.Web.Models.User
+@model QuanLyQuanAn.Web.Models.UserListViewModel
+
+@{
+    ViewData["Title"] = "Quản lý nhân sự";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/admin-user-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+}
+
+
+<div class="container-fluid py-3">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="h4 font-weight-bold text-dark mb-1">
+                <i class="bi bi-shield-lock me-2 text-primary"></i>Quản lý nhân sự
+            </h2>
+            <p class="text-muted small mb-0">Hệ thống quản trị nội bộ Trung Sơn Food v1.0</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-action="ExportExcel" class="btn btn-outline-success btn-lg px-4 py-2 shadow-sm rounded-pill font-weight-bold" style="font-size: 1rem;">
+                <i class="bi bi-file-earmark-excel-fill me-2"></i>Xuất Excel
+            </a>
+
+            <a asp-action="Create" class="btn btn-primary btn-lg px-4 py-2 shadow rounded-pill font-weight-bold" style="font-size: 1rem;">
+                <i class="bi bi-person-plus-fill me-2"></i>Thêm nhân viên mới
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4 g-3">
+        <div class="col-md-4">
+            <div class="card shadow-soft border-0 p-4 h-100 position-relative overflow-hidden" style="border-radius: 20px !important;">
+                <div class="d-flex align-items-center position-relative" style="z-index: 2;">
+                    <div class="avatar-circle me-3" style="width: 50px; height: 50px; background: #eef2ff; color: #4361ee; border-radius: 14px;">
+                        <i class="bi bi-people-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase" style="letter-spacing: 0.5px;">Tổng nhân sự</div>
+                        <div class="h3 mb-0 font-weight-bold text-dark">@Model.TotalItems</div>
+                    </div>
+                </div>
+                <i class="bi bi-people position-absolute" style="right: -10px; bottom: -10px; font-size: 5rem; opacity: 0.03; transform: rotate(-15deg);"></i>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-soft border-0 p-4 h-100 position-relative overflow-hidden" style="border-radius: 20px !important; border-left: 4px solid #10b981 !important;">
+                <div class="d-flex align-items-center position-relative" style="z-index: 2;">
+                    <div class="avatar-circle me-3" style="width: 50px; height: 50px; background: #ecfdf5; color: #10b981; border-radius: 14px;">
+                        <i class="bi bi-person-check-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase" style="letter-spacing: 0.5px;">Đang trực chiến</div>
+                        <div class="h3 mb-0 font-weight-bold text-success">
+                            @(Model.Users?.Where(u => u.IsActive == true).Count() ?? 0)
+                        </div>
+                    </div>
+                </div>
+                <i class="bi bi-check-all position-absolute" style="right: -10px; bottom: -10px; font-size: 5rem; opacity: 0.05; transform: rotate(-15deg);"></i>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-soft border-0 p-4 h-100 position-relative overflow-hidden" style="border-radius: 20px !important;">
+                <div class="d-flex align-items-center position-relative" style="z-index: 2;">
+                    <div class="avatar-circle me-3" style="width: 50px; height: 50px; background: #fff1f2; color: #f43f5e; border-radius: 14px;">
+                        <i class="bi bi-shield-lock-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase" style="letter-spacing: 0.5px;">Tài khoản khóa</div>
+                        <div class="h3 mb-0 font-weight-bold text-danger">
+                            @(Model.Users?.Where(u => u.IsActive == false).Count() ?? 1)
+                        </div>
+                    </div>
+                </div>
+                <i class="bi bi-lock position-absolute" style="right: -10px; bottom: -10px; font-size: 5rem; opacity: 0.03; transform: rotate(-15deg);"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-soft border-0 mb-4" style="border-radius: 20px !important;">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center mb-3">
+                <i class="bi bi-filter-right fs-4 text-primary me-2"></i>
+                <h5 class="mb-0 font-weight-bold" style="font-size: 1rem;">Bộ lọc tìm kiếm nâng cao</h5>
+            </div>
+
+            @Html.AntiForgeryToken()
+
+            @* Thêm asp-action="Index" và method="get" *@
+            <form asp-action="Index" method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label small font-weight-bold text-muted text-uppercase" style="font-size: 0.65rem;">Tìm kiếm nhanh</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-0 px-3" style="height: 45px; border-radius: 10px 0 0 10px;"><i class="bi bi-search"></i></span>
+                        @* Thêm name="searchTerm" và value để giữ giá trị *@
+                        <input type="text" name="searchTerm" value="@ViewData["CurrentSearch"]" class="form-control bg-light border-0 shadow-none" placeholder="Tên, email hoặc SĐT..."
+                               style="height: 45px; border-radius: 0 10px 10px 0; font-size: 0.9rem;">
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label small font-weight-bold text-muted text-uppercase" style="font-size: 0.65rem;">Phân quyền</label>
+                    @* Thêm name="role" *@
+                    <select name="role" class="form-select bg-light border-0 shadow-none"
+                            style="height: 45px; border-radius: 10px; font-size: 0.9rem; cursor: pointer;">
+                        <option value="">Tất cả vai trò</option>
+                        <option value="Admin" selected='@(ViewData["CurrentRole"]?.ToString() == "Admin")'>Quản trị viên</option>
+                        <option value="Staff" selected='@(ViewData["CurrentRole"]?.ToString() == "Staff")'>Nhân viên</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label small font-weight-bold text-muted text-uppercase" style="font-size: 0.65rem;">Trạng thái</label>
+                    @* Thêm name="status" *@
+                    <select name="status" class="form-select bg-light border-0 shadow-none"
+                            style="height: 45px; border-radius: 10px; font-size: 0.9rem; cursor: pointer;">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="active" selected='@(ViewData["CurrentStatus"]?.ToString() == "active")'>Đang làm việc</option>
+                        <option value="locked" selected='@(ViewData["CurrentStatus"]?.ToString() == "locked")'>Đã khóa</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 d-flex align-items-end gap-2">
+                    @* Nút Lọc chiếm phần lớn không gian *@
+                    <button type="submit" class="btn btn-primary flex-grow-1 font-weight-bold shadow-sm"
+                            style="height: 45px; border-radius: 10px; transition: all 0.2s;">
+                        <i class="bi bi-funnel me-1"></i> Lọc
+                    </button>
+
+                    @* Nút Reset dạng icon vuông để tiết kiệm diện tích *@
+                    <a asp-action="Index" class="btn btn-light border font-weight-bold"
+                       style="height: 45px; width: 45px; min-width: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background-color: #f8fafc;"
+                       title="Thiết lập lại">
+                        <i class="bi bi-arrow-clockwise fs-5"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-soft border-0 overflow-hidden">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th class="ps-4" style="width: 40px;">
+                                <div class="form-check">
+                                    <input class="form-check-input shadow-none" type="checkbox" id="selectAll">
+                                </div>
+                            </th>
+                            <th><i class="bi bi-person me-2"></i>Nhân viên</th>
+                            <th><i class="bi bi-envelope-at me-2"></i>Thông tin liên lạc</th>
+                            <th><i class="bi bi-briefcase me-2"></i>Chức vụ</th>
+                            <th><i class="bi bi-activity me-2"></i>Trạng thái</th>
+                            <th class="text-end pe-4">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Users != null && Model.Users.Any())
+                        {
+                            foreach (var item in Model.Users)
+                            {
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input shadow-none user-checkbox" type="checkbox" value="@item.Id">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle me-3">
+                                                @(!string.IsNullOrEmpty(item.FullName) ? item.FullName.Substring(0, 1).ToUpper() : "U")
+                                            </div>
+                                            <span class="font-weight-bold text-dark">@item.FullName</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="small text-muted mb-1">
+                                            <i class="bi bi-envelope me-1"></i>@item.Email
+                                        </div>
+                                        <div class="small text-muted">
+                                            <i class="bi bi-telephone me-1"></i>@item.PhoneNumber
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge-custom @(item.Role == "Admin" ? "role-admin" : "role-staff")">
+                                            <i class="bi @(item.Role == "Admin" ? "bi-person-badge" : "bi-person") me-1"></i>
+                                            @item.Role
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (item.IsActive)
+                                        {
+                                            <span class="text-success small fw-bold d-flex align-items-center">
+                                                <i class="bi bi-check-circle-fill me-1"></i>Đang làm
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-danger small fw-bold d-flex align-items-center">
+                                                <i class="bi bi-lock-fill me-1"></i>Đã khóa
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="pe-4 text-end">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <a href="javascript:void(0);"
+                                               class="btn-action view btn-detail"
+                                               data-id="@item.Id"
+                                               title="Xem chi tiết">
+                                                <i class="bi bi-eye-fill"></i>
+                                            </a>
+
+                                            <a href="@Url.Action("Edit", new { id = item.Id })" class="btn-action edit" title="Chỉnh sửa">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+
+                                            <button type="button"
+                                                    class="btn-action delete btn-delete-user"
+                                                    data-id="@item.Id"
+                                                    data-name="@item.FullName"
+                                                    title="Xóa">
+                                                <i class="bi bi-trash3-fill"></i>
+                                            </button>
+
+                                            <button type="button"
+                                                    class="btn-action @(item.IsActive ? "lock" : "unlock") btn-toggle-status"
+                                                    data-id="@item.Id"
+                                                    data-name="@item.FullName"
+                                                    data-active="@item.IsActive.ToString().ToLower()"
+                                                    title="@(item.IsActive ? "Khóa tài khoản" : "Mở khóa")">
+                                                <i class="bi @(item.IsActive ? "bi-shield-slash-fill" : "bi-unlock-fill")"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">Không tìm thấy dữ liệu nhân viên.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card-footer bg-white border-0 py-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <span class="text-muted small">Hiển thị trang <b>@Model.CurrentPage</b> trên @Model.TotalPages</span>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+                            <a class="page-link shadow-none" asp-action="Index" asp-route-page="@(Model.CurrentPage - 1)">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link shadow-none" asp-action="Index" asp-route-page="@i">@i</a>
+                            </li>
+                        }
+
+                        <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link shadow-none" asp-action="Index" asp-route-page="@(Model.CurrentPage + 1)">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 15px; border: none;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title font-weight-bold"><i class="bi bi-person-lines-fill me-2"></i>Chi tiết nhân sự</h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="detailsModalBody">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+<script>
+    $(document).ready(function () {
+        $('#selectAll').change(function() {
+            $('.user-checkbox').prop('checked', $(this).prop('checked'));
+        });
+
+        $('.btn-toggle-status').click(function () {
+            const btn = $(this);
+            const userId = btn.data('id');
+            const userName = btn.data('name');
+
+            const isActive = btn.data('active') === true || btn.data('active') === "true";
+
+            const actionText = isActive ? "Khóa" : "Mở khóa";
+            const iconSwal = isActive ? "warning" : "question";
+
+            Swal.fire({
+                title: actionText + ' tài khoản?',
+                text: `Bạn có chắc chắn muốn ${actionText.toLowerCase()} nhân viên ${userName}?`,
+                icon: iconSwal,
+                showCancelButton: true,
+                confirmButtonColor: isActive ? '#d33' : '#3085d6',
+                cancelButtonColor: '#6e7881',
+                confirmButtonText: 'Đồng ý',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const originalHtml = btn.html();
+                    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+                    $.ajax({
+                        url: '@Url.Action("ToggleStatus", "User")',
+                        type: 'POST',
+                        data: { id: userId },
+                        headers: {
+                            "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function (res) {
+                            if (res.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Thành công',
+                                    text: res.message,
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+                                btn.prop('disabled', false).html(originalHtml);
+                            }
+                        },
+                        error: function () {
+                            Swal.fire('Thất bại!', 'Lỗi kết nối máy chủ.', 'error');
+                            btn.prop('disabled', false).html(originalHtml);
+                        }
+                    });
+                }
+            });
+        });
+    });
+
+    $(document).ready(function () {
+        $('.btn-detail').click(function () {
+            var userId = $(this).data('id');
+
+            $('#detailsModalBody').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            $('#detailsModal').modal('show');
+
+            $.ajax({
+                url: '@Url.Action("Details", "User")',
+                type: 'GET',
+                data: { id: userId },
+                success: function (res) {
+                    $('#detailsModalBody').html(res);
+                },
+                error: function () {
+                    $('#detailsModalBody').html('<p class="text-danger">Không thể tải dữ liệu. Vui lòng thử lại.</p>');
+                    }
+                });
+        });
+
+        $('.btn-delete-user').click(function () {
+            const btn = $(this);
+            const userId = btn.data('id');
+            const userName = btn.data('name');
+
+            Swal.fire({
+                title: 'Xác nhận xóa?',
+                html: `Bạn có chắc muốn xóa vĩnh viễn nhân viên<br><b class="text-danger">${userName}</b>?<br>Hành động này không thể hoàn tác!`,
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6e7881',
+                confirmButtonText: 'Xóa ngay',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const originalHtml = btn.html();
+                    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+                    $.ajax({
+                        url: '@Url.Action("Delete", "User", new { area = "Admin" })',
+                        type: 'POST',
+                        data: { id: userId },
+                        headers: {
+                            "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function (res) {
+                            if (res.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Đã xóa!',
+                                    text: res.message,
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Lỗi!', res.message, 'error');
+                                btn.prop('disabled', false).html(originalHtml);
+                            }
+                        },
+                        error: function () {
+                            Swal.fire('Thất bại!', 'Lỗi kết nối máy chủ hoặc hệ thống.', 'error');
+                            btn.prop('disabled', false).html(originalHtml);
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
+}

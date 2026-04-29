@@ -1,0 +1,174 @@
+﻿<style>
+    /* Tổng thể Sidebar - Sử dụng Flexbox để đẩy profile xuống đáy */
+    .left_col {
+        width: 200px; /* Thu nhỏ chiều ngang */
+        background: #1e293b;
+        min-height: 100vh;
+        padding: 20px 12px;
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+        color: #f8fafc;
+        display: flex;
+        flex-direction: column; /* Sắp xếp theo chiều dọc */
+        transition: all 0.3s ease;
+    }
+
+    /* Logo Brand Section */
+    .sidebar-brand {
+        padding: 0 10px 20px 10px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+        .sidebar-brand i {
+            font-size: 1.2rem;
+            color: #38bdf8;
+            margin-right: 8px;
+        }
+
+        .sidebar-brand span {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+    /* Menu List - Chiếm không gian trống để đẩy Profile xuống */
+    .nav.side-menu {
+        padding: 20px 0;
+        margin: 0;
+        list-style: none;
+        flex-grow: 1; /* Quan trọng: Chiếm hết phần còn trống */
+    }
+
+        .nav.side-menu li a {
+            color: #94a3b8;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px; /* Chữ nhỏ lại một chút cho hợp chiều ngang */
+            transition: all 0.25s ease;
+        }
+
+            .nav.side-menu li a i {
+                width: 20px;
+                margin-right: 10px;
+                font-size: 1.1rem;
+            }
+
+        /* Active & Hover */
+        .nav.side-menu li.active a {
+            background: #3b82f6;
+            color: #ffffff;
+        }
+
+        .nav.side-menu li a:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+        }
+
+    /* Profile Section - Nằm ở cuối cùng */
+    .profile {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        margin-top: auto; /* Đảm bảo luôn ở đáy */
+    }
+
+    .profile_pic i {
+        font-size: 24px;
+        color: #38bdf8;
+        margin-right: 10px;
+    }
+
+    .profile_info span {
+        display: block;
+        font-size: 10px;
+        color: #94a3b8;
+        text-transform: uppercase;
+    }
+
+    .profile_info h4 {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: #ffffff;
+    }
+
+    .sidebar-divider {
+        height: 1px;
+        background: rgba(255,255,255,0.05);
+        margin: 12px 0;
+    }
+
+    .logout-item a {
+        color: #fb7185 !important;
+    }
+</style>
+
+<div class="left_col">
+    <div class="sidebar-brand">
+        <i class="bi bi-shop"></i>
+        <span>TRUNG SƠN CMS</span>
+    </div>
+
+    <ul class="nav side-menu flex-column">
+        <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")">
+            <a asp-area="Admin" asp-controller="Home" asp-action="Index">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+        </li>
+
+        <li>
+            <div class="sidebar-divider"></div>
+        </li>
+
+        <li class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "User" ? "active" : "")">
+            <a asp-area="Admin" asp-controller="User" asp-action="Index">
+                <i class="bi bi-people-fill"></i> Nhân sự
+            </a>
+        </li>
+
+        <li>
+            <a href="@Url.Action("Index", "Categories", new { Areas = "Admin" })">
+                <i class="bi bi-journal-medical"></i> Danh mục món ăn
+            </a>
+        </li>
+
+        <li>
+            <a href="#">
+                <i class="bi bi-journal-medical"></i> Thực đơn
+            </a>
+        </li>
+
+        <li>
+            <a href="#">
+                <i class="bi bi-cart-check"></i> Đơn hàng
+            </a>
+        </li>
+
+        <li>
+            <div class="sidebar-divider"></div>
+        </li>
+
+        <li class="logout-item">
+            <a href="#">
+                <i class="bi bi-box-arrow-left"></i> Đăng xuất
+            </a>
+        </li>
+    </ul>
+
+    <div class="profile">
+        <div class="profile_pic">
+            <i class="bi bi-person-badge-fill"></i>
+        </div>
+        <div class="profile_info">
+            <span>Admin,</span>
+            <h4>Minh Tâm</h4>
+        </div>
+    </div>
+</div>

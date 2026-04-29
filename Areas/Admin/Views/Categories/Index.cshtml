@@ -1,0 +1,275 @@
+﻿@model IEnumerable<QuanLyQuanAn.Web.Models.Category>
+@{
+    ViewData["Title"] = "Quản lý danh mục";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+@section Styles {
+    @* Sử dụng lại CSS của trang nhân sự để giữ đồng bộ giao diện *@
+    <link rel="stylesheet" href="~/css/admin/admin-user-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        /* Tùy chỉnh thêm một chút cho icon danh mục */
+        .category-icon-box {
+            width: 45px;
+            height: 45px;
+            background: #f1f5f9;
+            color: #475569;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 1px solid #e2e8f0;
+        }
+        /* Style cho Badge trạng thái mềm mại hơn */
+        .badge-soft-success {
+            background-color: #ecfdf5;
+            color: #10b981;
+            border: 1px solid #d1fae5;
+        }
+
+        .badge-soft-danger {
+            background-color: #fff1f2;
+            color: #f43f5e;
+            border: 1px solid #ffe4e6;
+        }
+    </style>
+}
+
+<div class="container-fluid py-3">
+    @* --- TIÊU ĐỀ & NÚT THAO TÁC --- *@
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="h4 font-weight-bold text-dark mb-1">
+                <i class="bi bi-tags-fill me-2 text-primary"></i>Quản lý danh mục
+            </h2>
+            <p class="text-muted small mb-0">Phân loại thực đơn nhà hàng Trung Sơn Food</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="#" class="btn btn-outline-success btn-lg px-4 py-2 shadow-sm rounded-pill font-weight-bold" style="font-size: 0.9rem;">
+                <i class="bi bi-file-earmark-excel-fill me-2"></i>Xuất danh sách
+            </a>
+
+            <a asp-area="Admin" asp-controller="Categories" asp-action="Create"
+               class="btn btn-primary btn-lg px-4 py-2 shadow rounded-pill font-weight-bold"
+               style="font-size: 0.9rem;">
+                <i class="bi bi-plus-circle-fill me-2"></i>Thêm danh mục mới
+            </a>
+        </div>
+    </div>
+
+    @* --- THẺ THỐNG KÊ (Giữ nguyên yêu cầu) --- *@
+    <div class="row mb-4 g-3">
+        <div class="col-md-4">
+            <div class="card shadow-soft border-0 p-4 h-100 position-relative overflow-hidden" style="border-radius: 20px !important;">
+                <div class="d-flex align-items-center position-relative" style="z-index: 2;">
+                    <div class="avatar-circle me-3" style="width: 50px; height: 50px; background: #eef2ff; color: #4361ee; border-radius: 14px;">
+                        <i class="bi bi-grid-3x3-gap-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">Tổng nhóm món</div>
+                        <div class="h3 mb-0 font-weight-bold text-dark">@Model.Count()</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-soft border-0 p-4 h-100 position-relative overflow-hidden" style="border-radius: 20px !important; border-left: 4px solid #10b981 !important;">
+                <div class="d-flex align-items-center position-relative" style="z-index: 2;">
+                    <div class="avatar-circle me-3" style="width: 50px; height: 50px; background: #ecfdf5; color: #10b981; border-radius: 14px;">
+                        <i class="bi bi-eye-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">Đang kinh doanh</div>
+                        <div class="h3 mb-0 font-weight-bold text-success">@Model.Count(x => x.IsActive)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-soft border-0 p-4 h-100 position-relative overflow-hidden" style="border-radius: 20px !important;">
+                <div class="d-flex align-items-center position-relative" style="z-index: 2;">
+                    <div class="avatar-circle me-3" style="width: 50px; height: 50px; background: #fff1f2; color: #f43f5e; border-radius: 14px;">
+                        <i class="bi bi-eye-slash-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">Đang tạm ẩn</div>
+                        <div class="h3 mb-0 font-weight-bold text-danger">@Model.Count(x => !x.IsActive)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* --- BẢNG DANH MỤC --- *@
+    <div class="card shadow-soft border-0 overflow-hidden" style="border-radius: 20px !important;">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle" id="categoryTable">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4" style="width: 80px;">Thứ tự</th>
+                            <th>Tên danh mục</th>
+                            <th>Ngày tạo</th> @* THÊM MỚI *@
+                            <th class="text-center">Số món ăn</th>
+                            <th class="text-center">Trạng thái</th>
+                            <th class="text-end pe-4">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr id="row-@item.Id">
+                                    <td class="ps-4 font-weight-bold text-primary">#@item.DisplayOrder</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="category-icon-box me-3">
+                                                @item.Name.Substring(0, Math.Min(2, item.Name.Length)).ToUpper()
+                                            </div>
+                                            <div>
+                                                <span class="font-weight-bold text-dark d-block">@item.Name</span>
+                                                <small class="text-muted">ID: @item.Id</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    @* LẤY GIÁ TRỊ NGÀY TẠO *@
+                                    <td>
+                                        <span class="text-muted small">
+                                            <i class="bi bi-clock-history me-1"></i>
+                                            @item.CreatedDate.ToString("dd/MM/yyyy HH:mm")
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-light text-dark border">0 món</span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (item.IsActive)
+                                        {
+                                            <span class="badge badge-soft-success rounded-pill px-3 py-2">
+                                                <i class="bi bi-check-circle-fill me-1"></i>Hiển thị
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-soft-danger rounded-pill px-3 py-2">
+                                                <i class="bi bi-eye-slash-fill me-1"></i>Đang ẩn
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="pe-4 text-end">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn-action edit">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            @* Điều chỉnh lại nút xóa để dùng Ajax *@
+                                            <button type="button" class="btn-action delete btn-delete-ajax"
+                                                    data-id="@item.Id" data-name="@item.Name">
+                                                <i class="bi bi-trash3-fill"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">Chưa có danh mục nào được tạo.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @* --- PHÂN TRANG (Đã được làm động) --- *@
+        <div class="card-footer bg-white border-0 py-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <span class="text-muted small">
+                    Trang @ViewBag.CurrentPage / @ViewBag.TotalPages (Tổng @Model!.Count() dòng)
+                </span>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        @* Nút Quay lại *@
+                        <li class="page-item @(ViewBag.HasPreviousPage ? "" : "disabled")">
+                            <a class="page-link shadow-none" href="@Url.Action("Index", new { page = ViewBag.CurrentPage - 1 })">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+
+                        @* Danh sách số trang *@
+                        @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                                <a class="page-link shadow-none" href="@Url.Action("Index", new { page = i })">@i</a>
+                            </li>
+                        }
+
+                        @* Nút Tiếp theo *@
+                        <li class="page-item @(ViewBag.HasNextPage ? "" : "disabled")">
+                            <a class="page-link shadow-none" href="@Url.Action("Index", new { page = ViewBag.CurrentPage + 1 })">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function () {
+            // Xử lý Xóa bằng AJAX
+            $('.btn-delete-ajax').click(function () {
+                const id = $(this).data('id');
+                const name = $(this).data('name');
+
+                Swal.fire({
+                    title: 'Bạn có chắc chắn?',
+                    html: `Danh mục <br><b class="text-danger">${name}</b><br> sẽ bị xóa vĩnh viễn!`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#f43f5e',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Xóa ngay',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '@Url.Action("Delete", "Categories")',
+                            type: 'POST',
+                            data: { id: id },
+                            success: function (res) {
+                                if (res.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Đã xóa!',
+                                        text: res.message,
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    });
+                                    // Hiệu ứng ẩn dòng bị xóa
+                                    $(`#row-${id}`).addClass('bg-light-danger').fadeOut(600);
+                                } else {
+                                    Swal.fire('Lỗi!', res.message, 'error');
+                                }
+                            },
+                            error: function () {
+                                Swal.fire('Lỗi!', 'Không thể thực hiện thao tác xóa.', 'error');
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}

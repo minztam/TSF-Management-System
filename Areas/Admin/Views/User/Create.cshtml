@@ -1,0 +1,133 @@
+﻿@model QuanLyQuanAn.Web.Models.User
+
+@{
+    ViewData["Title"] = "Thêm nhân viên";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-form.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+}
+
+<div class="container-fluid">
+    <div class="mb-4 mt-2">
+        <h1 class="h4 mb-0 text-gray-800 font-weight-bold">
+            <i class="bi bi-person-plus-fill mr-2"></i> THÊM NHÂN VIÊN MỚI
+        </h1>
+        <p class="text-muted small">Điền thông tin chi tiết để tạo tài khoản nhân sự mới cho hệ thống Trung Sơn Food.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm-custom card-form border-0">
+                <div class="card-body p-4">
+                    <form id="formCreateUser">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="FullName">Họ và tên</label>
+                            <input asp-for="FullName" class="form-control form-control-custom" placeholder="Ví dụ: Nguyễn Văn A" />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Email">Email công việc</label>
+                                    <input asp-for="Email" class="form-control form-control-custom" placeholder="email@example.com" />
+                                    <span asp-validation-for="Email" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="PhoneNumber">Số điện thoại</label>
+                                    <input asp-for="PhoneNumber" class="form-control form-control-custom" placeholder="090..." />
+                                    <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Role">Chức vụ</label>
+                            <select asp-for="Role" class="form-control form-control-custom">
+                                <option value="Staff">Nhân viên (Staff)</option>
+                                <option value="Manager">Quản lý (Manager)</option>
+                                <option value="Admin">Quản trị viên (Admin)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label>Mật khẩu đăng nhập</label>
+                            <input type="password" name="Password" class="form-control form-control-custom" placeholder="********" required />
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a asp-action="Index" class="btn-back mr-2">Hủy bỏ</a>
+                            @* Đổi type="submit" thành type="button" để bắt sự kiện Ajax *@
+                            <button type="button" id="btnSubmit" class="btn-save shadow-sm">
+                                <i class="bi bi-check-lg mr-1"></i> Lưu nhân viên
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function () {
+            $('#btnSubmit').click(function () {
+                const btn = $(this);
+                const form = $('#formCreateUser');
+
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-2"></span> Đang lưu...');
+
+                $.ajax({
+                    url: '@Url.Action("Create", "User")',
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (res) {
+                        if (res.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Thành công',
+                                text: res.message,
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = '@Url.Action("Index", "User")';
+                            });
+                        } else {
+                            let errorHtml = '<ul>';
+                            if (res.errors) {
+                                res.errors.forEach(err => { errorHtml += `<li>${err}</li>`; });
+                            } else {
+                                errorHtml += `<li>${res.message}</li>`;
+                            }
+                            errorHtml += '</ul>';
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Không thể lưu',
+                                html: errorHtml
+                            });
+                            btn.prop('disabled', false).html('<i class="bi bi-check-lg mr-1"></i> Lưu nhân viên');
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Lỗi!', 'Kết nối server thất bại.', 'error');
+                        btn.prop('disabled', false).html('<i class="bi bi-check-lg mr-1"></i> Lưu nhân viên');
+                    }
+                });
+            });
+        });
+    </script>
+}

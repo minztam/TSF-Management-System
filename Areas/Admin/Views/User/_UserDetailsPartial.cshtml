@@ -1,0 +1,40 @@
+﻿@model QuanLyQuanAn.Web.Models.User
+
+<div class="row">
+    <div class="col-md-4 text-center">
+        <div class="avatar-circle mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem; background: #eef2ff; color: #4361ee; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            @Model.FullName.Substring(0, 1).ToUpper()
+        </div>
+        <h5 class="mb-1">@Model.FullName</h5>
+        <span class="badge @(Model.Role == "Admin" ? "bg-danger" : "bg-primary") rounded-pill">@Model.Role</span>
+    </div>
+    <div class="col-md-8">
+        <table class="table table-sm table-borderless">
+            <tr>
+                <td class="text-muted" style="width: 120px;">Email:</td>
+                <td class="font-weight-bold">@Model.Email</td>
+            </tr>
+            <tr>
+                <td class="text-muted">Số điện thoại:</td>
+                <td class="font-weight-bold">@Model.PhoneNumber</td>
+            </tr>
+            <tr>
+                <td class="text-muted">Tên đăng nhập:</td>
+                <td><code class="text-primary">@Model.Username</code></td>
+            </tr>
+            <tr>
+                <td class="text-muted">Trạng thái:</td>
+                <td>
+                    @if (Model.IsActive)
+                    {
+                        <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Đang hoạt động</span>
+                    }
+                    else
+                    {
+                        <span class="text-danger"><i class="bi bi-lock-fill me-1"></i>Đã khóa</span>
+                    }
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>

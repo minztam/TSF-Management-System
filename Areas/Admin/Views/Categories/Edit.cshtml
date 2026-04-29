@@ -1,0 +1,127 @@
+﻿@model QuanLyQuanAn.Web.Areas.Admin.Models.Categories.RequestDTO
+
+@{
+    ViewData["Title"] = "Chỉnh sửa danh mục";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-form.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+}
+
+<div class="container-fluid">
+    @* Căn giữa tiêu đề *@
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 mb-4 mt-2">
+            <h1 class="h4 mb-0 text-gray-800 font-weight-bold text-uppercase">
+                <i class="bi bi-pencil-square mr-2 text-primary"></i> Cập nhật danh mục
+            </h1>
+            <p class="text-muted small">Thay đổi thông tin nhóm món ăn cho hệ thống Trung Sơn Food.</p>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm-custom card-form border-0">
+                <div class="card-body p-4">
+                    <form id="formEditCategory">
+                        @Html.AntiForgeryToken()
+
+                        @* CỰC KỲ QUAN TRỌNG: Giữ Id để Server biết đang sửa dòng nào *@
+                        <input type="hidden" asp-for="Id" />
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                        <div class="form-group mb-4">
+                            <label asp-for="Name" class="font-weight-bold mb-2">Tên danh mục</label>
+                            <input asp-for="Name" class="form-control form-control-custom" placeholder="Ví dụ: Hải sản, Món khai vị..." />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="DisplayOrder" class="font-weight-bold mb-2">Thứ tự hiển thị</label>
+                                    <input asp-for="DisplayOrder" type="number" class="form-control form-control-custom" />
+                                    <span asp-validation-for="DisplayOrder" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="d-block font-weight-bold mb-2">Trạng thái</label>
+                                    <div class="custom-control custom-switch mt-2">
+                                        <input type="checkbox" class="custom-control-input" asp-for="IsActive" id="IsActiveSwitch">
+                                        <label class="custom-control-label" for="IsActiveSwitch">Đang kinh doanh</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a asp-action="Index" class="btn-back mr-2 text-decoration-none">Hủy bỏ</a>
+                            <button type="button" id="btnUpdate" class="btn-save shadow-sm px-4">
+                                <i class="bi bi-cloud-arrow-up-fill mr-1"></i> Lưu thay đổi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function () {
+            $('#btnUpdate').click(function () {
+                const btn = $(this);
+                const form = $('#formEditCategory');
+
+                // Hiệu ứng loading
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-2"></span> Đang cập nhật...');
+
+                $.ajax({
+                    url: '@Url.Action("Edit", "Categories")',
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (res) {
+                        if (res.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Thành công',
+                                text: res.message,
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = '@Url.Action("Index", "Categories")';
+                            });
+                        } else {
+                            // Xử lý báo lỗi
+                            let errorList = '';
+                            if (res.errors) {
+                                res.errors.forEach(err => { errorList += `<li>${err}</li>`; });
+                            } else {
+                                errorList = `<li>${res.message}</li>`;
+                            }
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Cập nhật thất bại',
+                                html: `<ul class="text-left text-danger">${errorList}</ul>`
+                            });
+                            btn.prop('disabled', false).html('<i class="bi bi-cloud-arrow-up-fill mr-1"></i> Lưu thay đổi');
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Lỗi!', 'Kết nối máy chủ thất bại.', 'error');
+                        btn.prop('disabled', false).html('<i class="bi bi-cloud-arrow-up-fill mr-1"></i> Lưu thay đổi');
+                    }
+                });
+            });
+        });
+    </script>
+}
