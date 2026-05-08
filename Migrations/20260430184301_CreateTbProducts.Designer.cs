@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QuanLyQuanAn.Web.Data;
 
@@ -11,9 +12,11 @@ using QuanLyQuanAn.Web.Data;
 namespace QuanLyQuanAn.Web.Migrations
 {
     [DbContext(typeof(FoodDBContext))]
-    partial class FoodDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260430184301_CreateTbProducts")]
+    partial class CreateTbProducts
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -45,33 +48,6 @@ namespace QuanLyQuanAn.Web.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("tb_Categories");
-                });
-
-            modelBuilder.Entity("QuanLyQuanAn.Web.Models.Ingredient", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<double>("Quantity")
-                        .HasColumnType("float");
-
-                    b.Property<string>("Unit")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("tb_Ingredient");
                 });
 
             modelBuilder.Entity("QuanLyQuanAn.Web.Models.Product", b =>
@@ -111,26 +87,6 @@ namespace QuanLyQuanAn.Web.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("tb_Product");
-                });
-
-            modelBuilder.Entity("QuanLyQuanAn.Web.Models.ProductIngredient", b =>
-                {
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("IngredientId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Quantity")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("ProductId", "IngredientId");
-
-                    b.HasIndex("IngredientId");
-
-                    b.ToTable("tb_ProductIngredient");
                 });
 
             modelBuilder.Entity("QuanLyQuanAn.Web.Models.User", b =>
@@ -190,30 +146,6 @@ namespace QuanLyQuanAn.Web.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
-                });
-
-            modelBuilder.Entity("QuanLyQuanAn.Web.Models.ProductIngredient", b =>
-                {
-                    b.HasOne("QuanLyQuanAn.Web.Models.Ingredient", "Ingredient")
-                        .WithMany("ProductIngredients")
-                        .HasForeignKey("IngredientId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("QuanLyQuanAn.Web.Models.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Ingredient");
-
-                    b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("QuanLyQuanAn.Web.Models.Ingredient", b =>
-                {
-                    b.Navigation("ProductIngredients");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,0 +1,36 @@
+﻿@model QuanLyQuanAn.Web.Models.Ingredient
+
+<form asp-action="Create" asp-controller="Warehouse" method="post">
+    @Html.AntiForgeryToken()
+    <div class="modal-body p-4">
+        <div class="row g-3">
+            <div class="col-md-8">
+                <label class="form-label small fw-bold text-uppercase">Tên nguyên liệu</label>
+                <input asp-for="Name" class="form-control border-0 bg-light py-2 shadow-none" placeholder="Ví dụ: Tôm sú tươi" required>
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-uppercase">Số lượng đầu</label>
+                <input asp-for="Quantity" type="number" class="form-control border-0 bg-light py-2 shadow-none" value="0" min="0" step="0.01">
+                <span asp-validation-for="Quantity" class="text-danger small"></span>
+            </div>
+            <div class="col-12">
+                <label class="form-label small fw-bold text-uppercase">Đơn vị tính</label>
+                <select asp-for="Unit" class="form-select border-0 bg-light py-2 shadow-none">
+                    <option value="Kg">Kilogram (Kg)</option>
+                    <option value="Gram">Gram (g)</option>
+                    <option value="Lít">Lít (L)</option>
+                    <option value="Chai">Chai</option>
+                    <option value="Gói">Gói</option>
+                </select>
+                <span asp-validation-for="Unit" class="text-danger small"></span>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer border-0">
+        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+        <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+            <i class="bi bi-save me-2"></i>Lưu nguyên liệu
+        </button>
+    </div>
+</form>

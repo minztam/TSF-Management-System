@@ -20,23 +20,19 @@ namespace QuanLyQuanAn.Web.Areas.Admin.Controllers
         public async Task<IActionResult> Index(int page = 1)
         {
             ViewBag.Title = "Quản lý Danh mục Món ăn";
-            int pageSize = 5; // Bạn có thể chỉnh lên 10 hoặc 20 tùy ý
+            int pageSize = 5;
 
             var query = _context.Categories.OrderBy(c => c.DisplayOrder);
 
-            // 1. Tính tổng số bản ghi
             int totalItems = await query.CountAsync();
 
-            // 2. Tính tổng số trang
             int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-            // 3. Lấy dữ liệu của trang hiện tại
             var categories = await query
-                .Skip((page - 1) * pageSize) // Bỏ qua các dòng của các trang trước
-                .Take(pageSize)               // Lấy số dòng đúng bằng pageSize
+                .Skip((page - 1) * pageSize) 
+                .Take(pageSize)   
                 .ToListAsync();
 
-            // 4. Truyền thông tin phân trang qua ViewBag
             ViewBag.CurrentPage = page;
             ViewBag.TotalPages = totalPages;
             ViewBag.HasPreviousPage = page > 1;

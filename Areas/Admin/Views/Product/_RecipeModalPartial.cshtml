@@ -1,0 +1,178 @@
+﻿@model IEnumerable<QuanLyQuanAn.Web.Models.ProductIngredient>
+
+@{
+    // Khai báo Local Function để tái sử dụng HTML
+    // Quantity bây giờ nhận kiểu dynamic hoặc string để hỗ trợ nhập chữ
+    async Task RenderRow(Guid? selectedIngId, object? quantity, string? unit)
+    {
+        <div class="row g-2 input-recipe-row align-items-center mb-3">
+            <div class="col-md-5">
+                <label class="small text-muted mb-1 d-md-none">Tên nguyên liệu</label>
+                <select class="form-select border-0 shadow-none bg-light py-2 ingredient-select">
+                    <option value="">Chọn từ kho...</option>
+                    @if (ViewBag.Ingredients != null)
+                    {
+                        foreach (var ig in ViewBag.Ingredients)
+                        {
+                            <option value="@ig.Id" data-unit="@ig.Unit"
+                                    selected="@(selectedIngId == ig.Id)">
+                                @ig.Name
+                            </option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="small text-muted mb-1 d-md-none">Định lượng (Nhập tay)</label>
+                @* Thay type="number" thành type="text" để nhập được "1 muỗng", "nửa bát"... *@
+                <input type="text" class="form-control border-0 shadow-none bg-light py-2 ingredient-quantity"
+                       placeholder="Ví dụ: 1 muỗng, 2 lát..."
+                       value="@(quantity != null ? quantity.ToString() : "")">
+            </div>
+            <div class="col-md-2">
+                <label class="small text-muted mb-1 d-md-none">ĐVT Gốc</label>
+                <input type="text" class="form-control border-0 shadow-none bg-light py-2 ingredient-unit text-center font-monospace"
+                       readonly value="@(string.IsNullOrEmpty(unit) ? "---" : unit)" style="font-size: 0.75rem;">
+            </div>
+            <div class="col-md-1 text-center">
+                <button type="button" class="btn text-danger p-0 btn-remove-row">
+                    <i class="bi bi-trash fs-5"></i>
+                </button>
+            </div>
+        </div>
+    }
+}
+
+<div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+    <div class="modal-header border-0 bg-light" style="border-radius: 20px 20px 0 0;">
+        <h5 class="modal-title font-weight-bold">
+            <i class="bi bi-tools me-2 text-primary"></i>Thiết lập định lượng
+        </h5>
+        <input type="hidden" id="modalProductId" value="@ViewBag.ProductId" />
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+    </div>
+
+    <div class="modal-body p-4">
+        <div class="mb-3">
+            <h6 class="text-primary mb-0">Món ăn: <span class="text-dark" id="modalDishName">@ViewBag.ProductName</span></h6>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <label class="font-weight-bold mb-0">Nguyên liệu thành phần</label>
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" id="addIngredient">
+                <i class="bi bi-plus-lg me-1"></i> Thêm dòng
+            </button>
+        </div>
+
+        <div id="recipeInputsContainer">
+            @if (Model != null && Model.Any())
+            {
+                foreach (var item in Model)
+                {
+                    await RenderRow(item.IngredientId, item.Quantity, item.Ingredient?.Unit);
+                }
+            }
+            else
+            {
+                await RenderRow(null, null, null);
+            }
+        </div>
+    </div>
+
+    <div class="modal-footer border-0">
+        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy bỏ</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4 shadow btn-save-recipe">
+            Cập nhật công thức
+        </button>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        // 1. Cập nhật ĐVT khi chọn nguyên liệu
+        $(document).off('change', '.ingredient-select').on('change', '.ingredient-select', function () {
+            const unit = $(this).find(':selected').data('unit');
+            $(this).closest('.input-recipe-row').find('.ingredient-unit').val(unit || '---');
+        });
+
+        // 2. Thêm dòng mới
+        $('#addIngredient').off('click').on('click', function () {
+            const $container = $('#recipeInputsContainer');
+            const $firstRow = $container.find('.input-recipe-row').first();
+            const $newRow = $firstRow.clone();
+
+            $newRow.find('input').val('');
+            $newRow.find('select').val('');
+            $newRow.find('.ingredient-unit').val('---');
+
+            $newRow.hide().appendTo($container).fadeIn(200);
+        });
+
+        // 3. Xóa dòng
+        $(document).off('click', '.btn-remove-row').on('click', '.btn-remove-row', function () {
+            if ($('.input-recipe-row').length > 1) {
+                $(this).closest('.input-recipe-row').fadeOut(200, function() { $(this).remove(); });
+            } else {
+                const $row = $(this).closest('.input-recipe-row');
+                $row.find('input').val('');
+                $row.find('select').val('');
+                $row.find('.ingredient-unit').val('---');
+            }
+        });
+
+        // 4. Lưu dữ liệu (Gửi chuỗi thay vì số)
+        $('.btn-save-recipe').off('click').on('click', function () {
+            const productId = $('#modalProductId').val();
+            const ingredients = [];
+            let isValid = true;
+
+            $('.input-recipe-row').each(function () {
+                const ingId = $(this).find('.ingredient-select').val();
+                const qty = $(this).find('.ingredient-quantity').val();
+
+                if (ingId || qty) {
+                    if (!ingId || !qty.trim()) {
+                        isValid = false;
+                        return false;
+                    }
+                    ingredients.push({
+                        IngredientId: ingId,
+                        Quantity: qty, 
+                        ProductId: productId
+                    });
+                }
+            });
+
+            if (!isValid) {
+                Swal.fire('Chú ý', 'Vui lòng chọn nguyên liệu và nhập định lượng (vd: 1 muỗng).', 'warning');
+                return;
+            }
+
+            if (ingredients.length === 0) {
+                Swal.fire('Chú ý', 'Vui lòng nhập ít nhất một nguyên liệu.', 'warning');
+                return;
+            }
+
+            const $btn = $(this);
+            $btn.html('<span class="spinner-border spinner-border-sm"></span>').prop('disabled', true);
+
+            $.ajax({
+                url: '/Admin/Product/UpdateRecipe',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(ingredients),
+                success: function (res) {
+                    if (res.success) {
+                        $('#editRecipeModal').modal('hide');
+                        Swal.fire('Thành công', 'Đã cập nhật định lượng!', 'success');
+                    } else {
+                        Swal.fire('Lỗi', res.message, 'error');
+                    }
+                },
+                complete: function () {
+                    $btn.html('Cập nhật công thức').prop('disabled', false);
+                }
+            });
+        });
+    });
+</script>

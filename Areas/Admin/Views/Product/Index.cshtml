@@ -1,0 +1,552 @@
+﻿@model IEnumerable<QuanLyQuanAn.Web.Models.Product>
+@{
+    ViewData["Title"] = "Quản lý thực đơn";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        .shadow-soft {
+            box-shadow: 0 0.75rem 1.5rem rgba(18, 38, 63, 0.03) !important;
+        }
+
+        .avatar-circle {
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-weight: bold;
+        }
+
+        .badge-custom {
+            padding: 0.5em 1em;
+            border-radius: 50rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .status-available {
+            background: #ecfdf5;
+            color: #10b981;
+        }
+
+        .status-unavailable {
+            background: #fff1f2;
+            color: #f43f5e;
+        }
+
+        /* Action Buttons */
+        .btn-action {
+            width: 35px;
+            height: 35px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+        }
+
+            .btn-action.recipe {
+                background: #fffce8;
+                color: #ca8a04;
+            }
+
+            .btn-action.view {
+                background: #eef2ff;
+                color: #4361ee;
+            }
+
+            .btn-action.edit {
+                background: #fff7ed;
+                color: #f59e0b;
+            }
+
+            .btn-action.delete {
+                background: #fff1f2;
+                color: #f43f5e;
+            }
+
+            .btn-action:hover {
+                transform: translateY(-2px);
+                filter: brightness(0.95);
+            }
+
+        .input-recipe-row {
+            background: #f8fafc;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            padding: 10px;
+        }
+    </style>
+}
+
+<div class="container-fluid py-3">
+    @* --- Header --- *@
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="h4 font-weight-bold text-dark mb-1"><i class="bi bi-egg-fried me-2 text-primary"></i>Quản lý thực đơn</h2>
+            <p class="text-muted small mb-0">Hệ thống quản trị nội bộ Trung Sơn Food v1.0</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-success btn-lg px-4 py-2 shadow-sm rounded-pill font-weight-bold" style="font-size: 1rem;">
+                <i class="bi bi-file-earmark-excel-fill me-2"></i>Xuất Excel
+            </button>
+            <a href="@Url.Action("Create", "Product", new { area = "Admin" })"
+               class="btn btn-primary btn-lg px-4 py-2 shadow rounded-pill font-weight-bold"
+               style="font-size: 1rem; display: inline-flex; align-items: center;">
+                <i class="bi bi-plus-circle-fill me-2"></i>Thêm món mới
+            </a>
+        </div>
+    </div>
+
+    @* --- Statistics Cards --- *@
+    <div class="row mb-4 g-3">
+        <div class="col-md-4">
+            <div class="card shadow-soft border-0 p-4 h-100" style="border-radius: 20px !important;">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-circle me-3" style="background: #eef2ff; color: #4361ee;">
+                        <i class="bi bi-box-seam fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">Tổng thực đơn</div>
+                        <div class="h3 mb-0 font-weight-bold text-dark">@Model.Count()</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-soft border-0 p-4 h-100" style="border-radius: 20px !important; border-left: 4px solid #10b981 !important;">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-circle me-3" style="background: #ecfdf5; color: #10b981;">
+                        <i class="bi bi-check2-circle fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">Đang phục vụ</div>
+                        <div class="h3 mb-0 font-weight-bold text-success">@Model.Count(p => p.IsActive == true)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-soft border-0 p-4 h-100" style="border-radius: 20px !important;">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-circle me-3" style="background: #fff1f2; color: #f43f5e;">
+                        <i class="bi bi-eye-slash fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small font-weight-bold text-uppercase">Tạm ngưng bán</div>
+                        <div class="h3 mb-0 font-weight-bold text-danger">@Model.Count(p => p.IsActive == false)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* --- Search Filter --- *@
+    <div class="card shadow-soft border-0 mb-4" style="border-radius: 20px !important;">
+        <div class="card-body p-4">
+            <form class="row g-3" method="get" action="@Url.Action("Index", "Product")">
+                <div class="col-md-4">
+                    <label class="form-label small font-weight-bold text-muted text-uppercase">Tìm món ăn</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-0 px-3" style="height: 45px; border-radius: 10px 0 0 10px;"><i class="bi bi-search"></i></span>
+                        <input type="text" name="searchTerm" class="form-control bg-light border-0 shadow-none" placeholder="Tên món ăn..." style="height: 45px; border-radius: 0 10px 10px 0;">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small font-weight-bold text-muted text-uppercase">Danh mục</label>
+                    <select name="categoryId" class="form-select bg-light border-0 shadow-none" style="height: 45px; border-radius: 10px;">
+                        <option value="">Tất cả danh mục</option>
+                        @* Thêm vòng lặp ViewBag.Categories nếu có *@
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small font-weight-bold text-muted text-uppercase">Trạng thái</label>
+                    <select name="status" class="form-select bg-light border-0 shadow-none" style="height: 45px; border-radius: 10px;">
+                        <option value="">Tất cả</option>
+                        <option value="true">Đang bán</option>
+                        <option value="false">Ngưng bán</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1 font-weight-bold shadow-sm" style="height: 45px; border-radius: 10px;">
+                        Lọc
+                    </button>
+                    <a href="@Url.Action("Index")" class="btn btn-light border" style="height: 45px; width: 45px; border-radius: 10px; background-color: #f8fafc; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-arrow-clockwise fs-5"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* --- Table Content --- *@
+    <div class="card shadow-soft border-0 overflow-hidden" style="border-radius: 20px !important;">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4" style="width: 40px;">
+                                <div class="form-check">
+                                    <input class="form-check-input shadow-none" type="checkbox" id="selectAllProducts">
+                                </div>
+                            </th>
+                            <th>Sản phẩm</th>
+                            <th>Giá bán</th>
+                            <th>Ngày tạo</th>
+                            <th>Phục vụ</th> @* Thay tên hiển thị cho IsAvailable *@
+                            <th>Kinh doanh</th> @* Thay tên hiển thị cho IsActive *@
+                            <th class="text-end pe-4">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var p in Model)
+                            {
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input shadow-none product-checkbox" type="checkbox" value="@p.Id">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="@(string.IsNullOrEmpty(p.ImageUrl) ? "/images/no-image.jpg" : p.ImageUrl)"
+                                                 class="me-3" style="width: 50px; height: 50px; border-radius: 12px; object-fit: cover; border: 1px solid #eee;">
+                                            <div>
+                                                <div class="font-weight-bold text-dark">@p.Name</div>
+                                                <span class="small text-muted">@(p.Category?.Name ?? "Chưa phân loại")</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="fw-bold text-primary">
+                                        @((p.Price * 1000).ToString("N0")) <u class="small">đ</u>
+                                    </td>
+                                    <td class="text-muted small">
+                                        @p.CreatedDate.ToString("dd/MM/yyyy")
+                                    </td>
+                                    @* Trạng thái Phục vụ (IsAvailable) *@
+                                    <td>
+                                        @if (p.IsAvailable)
+                                        {
+                                            <span class="badge-custom status-available"><i class="bi bi-check-circle-fill me-1"></i>Còn hàng</span>
+                                        }
+                                        else
+                                        {
+                                            @* Đã sửa thành status-unavailable *@
+                                            <span class="badge-custom status-unavailable"><i class="bi bi-exclamation-triangle-fill me-1"></i>Hết hàng</span>
+                                        }
+                                    </td>
+                                    @* Trạng thái Kinh doanh (IsActive) *@
+                                    <td>
+                                        @if (p.IsActive)
+                                        {
+                                            <span class="badge bg-success-soft text-success rounded-pill px-3" style="font-size: 0.7rem; background-color: #e6f7ed;">Mở bán</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary text-white rounded-pill px-3" style="font-size: 0.7rem;">Ngừng bán</span>
+                                        }
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <button class="btn-action recipe" title="Định lượng nguyên liệu"
+                                                    data-bs-toggle="modal" data-bs-target="#editRecipeModal"
+                                                    data-id="@p.Id" data-name="@p.Name">
+                                                <i class="bi bi-journal-plus"></i>
+                                            </button>
+                                            <a href="javascript:void(0);"
+                                               class="btn-action view btn-details"
+                                               data-id="@p.Id"
+                                               title="Xem chi tiết">
+                                                <i class="bi bi-eye-fill"></i>
+                                            </a>
+                                            <a href="@Url.Action("Edit", "Product", new { id = p.Id, area = "Admin" })" class="btn-action edit" title="Chỉnh sửa">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            <button class="btn-action delete btn-delete-product" data-id="@p.Id" data-name="@p.Name" title="Xóa món">
+                                                <i class="bi bi-trash3-fill"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                @* colspan="7" vì chúng ta có 7 cột tất cả *@
+                                <td colspan="7" class="text-center py-5 text-muted">Không tìm thấy món ăn nào.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white border-0 py-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <span class="text-muted small">Hiển thị <b>@Model!.Count()</b> sản phẩm</span>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item disabled"><a class="page-link shadow-none" href="#"><i class="bi bi-chevron-left"></i></a></li>
+                        <li class="page-item active"><a class="page-link shadow-none" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link shadow-none" href="#"><i class="bi bi-chevron-right"></i></a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* --- MODAL THIẾT LẬP CÔNG THỨC --- *@
+<div class="modal fade" id="editRecipeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div id="recipeModalContent">
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="detailsModalContent">
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function() {
+            // Checkbox Select All
+            $('#selectAllProducts').change(function() {
+                $('.product-checkbox').prop('checked', $(this).prop('checked'));
+            });
+
+            // Gán tên món vào modal khi mở
+            $('#editRecipeModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var name = button.data('name');
+                $('#modalDishName').text(name);
+            });
+
+            // Thêm dòng nguyên liệu (Clone row đầu tiên)
+            $('#addIngredient').click(function() {
+                var newRow = $('.input-recipe-row').first().clone();
+                newRow.find('input').val('');
+                newRow.find('select').prop('selectedIndex', 0);
+                newRow.hide().appendTo('#recipeInputsContainer').fadeIn(300);
+            });
+
+            // Xóa dòng nguyên liệu
+            $(document).on('click', '.btn-remove-row', function() {
+                if ($('.input-recipe-row').length > 1) {
+                    $(this).closest('.input-recipe-row').fadeOut(200, function() { $(this).remove(); });
+                } else {
+                    Swal.fire({ icon: 'info', title: 'Thông báo', text: 'Phải có ít nhất một nguyên liệu.', timer: 1500, showConfirmButton: false });
+                }
+            });
+
+            // Xử lý Xóa món ăn
+            $('.btn-delete-product').click(function() {
+                const id = $(this).data('id');
+                const name = $(this).data('name');
+
+                Swal.fire({
+                    title: 'Xác nhận xóa?',
+                    html: `Bạn có chắc muốn xóa <b>${name}</b>?<br><small class="text-danger">Hành động này không thể hoàn tác.</small>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#f43f5e',
+                    confirmButtonText: 'Xóa ngay',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // AJAX xóa tại đây (Ví dụ)
+                        // window.location.href = `/Admin/Product/Delete/${id}`;
+                        Swal.fire('Đã xóa!', 'Sản phẩm đã được gỡ khỏi hệ thống.', 'success');
+                    }
+                });
+            });
+
+            // Xử lý Lưu công thức
+            $('.btn-save-recipe').click(function() {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công',
+                    text: 'Đã cập nhật định lượng nguyên liệu cho món ăn này.',
+                    timer: 1800,
+                    showConfirmButton: false
+                }).then(() => { $('#editRecipeModal').modal('hide'); });
+             });
+
+                     $('.btn-details').click(function () {
+            const id = $(this).data('id');
+
+            $.ajax({
+                url: '@Url.Action("Details", "Product", new { area = "Admin" })',
+                type: 'GET',
+                data: { id: id },
+                success: function (res) {
+                    $('#detailsModalContent').html(res); // Đổ dữ liệu vào modal
+                    $('#detailsModal').modal('show');    // Hiển thị modal
+                },
+                error: function () {
+                    Swal.fire('Lỗi', 'Không thể tải chi tiết sản phẩm', 'error');
+                }
+            });
+        });
+
+        });
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            // 1. Khi nhấn nút mở Modal
+            $('#editRecipeModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var id = button.data('id');
+                var name = button.data('name');
+
+                $('#modalProductId').val(id);
+                $('#modalDishName').text(name);
+
+            });
+
+            // 2. Thêm dòng nguyên liệu mới
+            $('#addIngredient').click(function() {
+                var newRow = $('.input-recipe-row').first().clone();
+                newRow.find('input').val('');
+                newRow.find('.ingredient-unit').val('---');
+                newRow.find('select').prop('selectedIndex', 0);
+                newRow.hide().appendTo('#recipeInputsContainer').fadeIn(300);
+            });
+
+            // 3. Xử lý tự động hiển thị Đơn vị tính (ĐVT) khi chọn nguyên liệu
+            $(document).on('change', '.ingredient-select', function() {
+                var unit = $(this).find(':selected').data('unit');
+                $(this).closest('.input-recipe-row').find('.ingredient-unit').val(unit || '---');
+            });
+
+            // 4. Xử lý lưu công thức qua AJAX
+            $('.btn-save-recipe').click(function() {
+                var productId = $('#modalProductId').val();
+                var ingredients = [];
+
+                // Thu thập dữ liệu từ các dòng
+                $('.input-recipe-row').each(function() {
+                    var ingredientId = $(this).find('.ingredient-select').val();
+                    var quantity = $(this).find('.ingredient-quantity').val();
+
+                    if (ingredientId && quantity > 0) {
+                        ingredients.push({
+                            ProductId: productId,
+                            IngredientId: ingredientId,
+                            Quantity: parseFloat(quantity)
+                        });
+                    }
+                });
+
+                if (ingredients.length === 0) {
+                    Swal.fire('Cảnh báo', 'Vui lòng nhập ít nhất một nguyên liệu hợp lệ.', 'warning');
+                    return;
+                }
+
+                // Gửi dữ liệu lên Controller
+                $.ajax({
+                    url: '/Admin/Product/UpdateRecipe',
+                    type: 'POST',
+                    data: {
+                        productId: productId,
+                        ingredients: ingredients
+                    },
+                    success: function(res) {
+                        if (res.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Thành công',
+                                text: 'Công thức đã được cập nhật!',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                $('#editRecipeModal').modal('hide');
+                            });
+                        } else {
+                            Swal.fire('Lỗi', res.message, 'error');
+                        }
+                    },
+                    error: function() {
+                        Swal.fire('Lỗi', 'Không thể kết nối đến máy chủ.', 'error');
+                    }
+                });
+
+                        $('#saveRecipeBtn').click(function() {
+            var recipeData = [];
+            var productId = $('#modalProductId').val();
+
+            $('.input-recipe-row').each(function() {
+                var ingredientId = $(this).find('.ingredient-select').val();
+                var quantity = $(this).find('.ingredient-quantity').val();
+
+                if(ingredientId && quantity) {
+                    recipeData.push({
+                        ProductId: productId,
+                        IngredientId: ingredientId,
+                        Quantity: parseFloat(quantity)
+                    });
+                }
+            });
+
+            $.ajax({
+                url: '/Admin/Product/UpdateRecipe',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(recipeData),
+                success: function(res) {
+                    if(res.success) {
+                        Swal.fire('Thành công', 'Đã cập nhật định lượng!', 'success');
+                        $('#editRecipeModal').modal('hide');
+                    }
+                }
+            });
+        });
+            });
+        });
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            $(document).on('click', '.recipe', function(e) {
+                e.preventDefault();
+
+                var id = $(this).data('id');
+                var name = $(this).data('name');
+
+                $('#recipeModalContent').html('<div class="bg-white p-5 text-center" style="border-radius:20px;"><div class="spinner-border text-primary"></div><p class="mt-2">Đang tải dữ liệu...</p></div>');
+                $('#editRecipeModal').modal('show');
+
+                $.ajax({
+                    url: '@Url.Action("GetRecipePartial", "Product", new { area = "Admin" })',
+                    type: 'GET',
+                    data: { id: id, name: name },
+                    success: function(data) {
+                        $('#recipeModalContent').html(data);
+                    },
+                    error: function() {
+                        $('#editRecipeModal').modal('hide');
+                        Swal.fire('Lỗi', 'Không thể tải dữ liệu công thức.', 'error');
+                    }
+                });
+            });
+        });
+    </script>
+
+}

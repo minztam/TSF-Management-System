@@ -1,0 +1,213 @@
+﻿@model QuanLyQuanAn.Web.Areas.Admin.Models.Product.ProductVM
+
+@{
+    ViewData["Title"] = "Chỉnh sửa sản phẩm";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/Admin/admin-form.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        .image-upload-wrapper {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            border: 2px dashed #d1d3e2;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: #f8f9fc;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+            .image-upload-wrapper:hover {
+                border-color: #4e73df;
+                background-color: #f1f3f9;
+            }
+
+        #previewImg {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+            display: @(string.IsNullOrEmpty(Model.ImageUrl) ? "none" : "block");
+        }
+
+        .upload-placeholder {
+            text-align: center;
+            color: #858796;
+            display: @(string.IsNullOrEmpty(Model.ImageUrl) ? "block" : "none");
+        }
+
+            .upload-placeholder i {
+                font-size: 3rem;
+            }
+    </style>
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 mb-4 mt-2">
+            <h1 class="h4 mb-0 text-gray-800 font-weight-bold">
+                <i class="bi bi-pencil-square mr-2 text-primary"></i> CHỈNH SỬA MÓN ĂN
+            </h1>
+            <p class="text-muted small">Cập nhật thông tin chi tiết cho món: <strong>@Model.Name</strong></p>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm-custom card-form border-0">
+                <div class="card-body p-4">
+                    <form id="formEditProduct" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="ImageUrl" />
+
+                        <div class="row">
+                            <div class="col-md-4 border-right">
+                                <label class="font-weight-bold mb-3 d-block text-center">Hình ảnh hiện tại</label>
+                                <div class="image-upload-wrapper" onclick="$('#ImageFile').click()">
+                                    <div class="upload-placeholder">
+                                        <i class="bi bi-camera"></i>
+                                        <p class="small mb-0">Nhấp để thay đổi ảnh</p>
+                                    </div>
+                                    <img id="previewImg" src="@Model.ImageUrl" alt="Product Image" />
+                                </div>
+                                <input type="file" asp-for="ImageFile" class="d-none" accept="image/*" />
+                                <span asp-validation-for="ImageFile" class="text-danger small d-block mt-2"></span>
+                                <p class="text-muted small mt-3 italic text-center">Để trống nếu không muốn thay đổi ảnh.</p>
+                            </div>
+
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-12 form-group mb-4">
+                                        <label asp-for="Name" class="font-weight-bold mb-2">Tên món ăn <span class="text-danger">*</span></label>
+                                        <input asp-for="Name" class="form-control form-control-custom" placeholder="Ví dụ: Tôm thẻ hấp nước dừa..." />
+                                        <span asp-validation-for="Name" class="text-danger small"></span>
+                                    </div>
+
+                                    <div class="col-md-6 form-group mb-4">
+                                        <label asp-for="CategoryId" class="font-weight-bold mb-2">Danh mục món ăn</label>
+                                        <select asp-for="CategoryId" class="form-control form-control-custom" asp-items="ViewBag.Categories">
+                                            <option value="">-- Chọn danh mục --</option>
+                                        </select>
+                                        <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                                    </div>
+
+                                    <div class="col-md-6 form-group mb-4">
+                                        <label asp-for="Price" class="font-weight-bold mb-2">Giá bán (VNĐ)</label>
+                                        <input asp-for="Price" type="number" class="form-control form-control-custom text-primary font-weight-bold" />
+                                        <span asp-validation-for="Price" class="text-danger small"></span>
+                                    </div>
+
+                                    <div class="col-md-12 form-group mb-4">
+                                        <label asp-for="Description" class="font-weight-bold mb-2">Mô tả món ăn</label>
+                                        <textarea asp-for="Description" class="form-control form-control-custom" rows="3"></textarea>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="custom-control custom-switch mt-2">
+                                            <input type="checkbox" class="custom-control-input" asp-for="IsAvailable" id="IsAvailableSwitch">
+                                            <label class="custom-control-label font-weight-bold" for="IsAvailableSwitch">Đang phục vụ</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="custom-control custom-switch mt-2">
+                                            <input type="checkbox" class="custom-control-input" asp-for="IsActive" id="IsActiveSwitch">
+                                            <label class="custom-control-label font-weight-bold" for="IsActiveSwitch">Cho phép kinh doanh</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a asp-action="Index" class="btn btn-light rounded-pill px-4 mr-2">Quay lại</a>
+                            <button type="button" id="btnUpdate" class="btn-save shadow px-4">
+                                <i class="bi bi-check-circle-fill mr-1"></i> Lưu thay đổi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function () {
+            // 1. Preview ảnh khi chọn file mới
+            $('#ImageFile').change(function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const validImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
+                    if (!validImageTypes.includes(file.type)) {
+                        Swal.fire('Lỗi', 'Vui lòng chọn định dạng ảnh JPG, PNG hoặc WEBP', 'error');
+                        $(this).val('');
+                        return false;
+                    }
+
+                    let reader = new FileReader();
+                    reader.onload = function (e) {
+                        $('.upload-placeholder').hide();
+                        $('#previewImg').attr('src', e.target.result).show();
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // 2. Gửi dữ liệu Edit qua Ajax
+            $('#btnUpdate').click(function (e) {
+                e.preventDefault();
+
+                const btn = $(this);
+                const form = $('#formEditProduct');
+
+                if (!form.valid()) return false;
+
+                const formData = new FormData(form[0]);
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-2"></span> Đang lưu...');
+
+                $.ajax({
+                    url: '@Url.Action("Edit", "Product", new { area = "Admin" })',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        if (res.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Cập nhật thành công!',
+                                text: res.message,
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = '@Url.Action("Index", "Product", new { area = "Admin" })';
+                            });
+                        } else {
+                            Swal.fire('Thất bại', res.message || 'Không thể cập nhật sản phẩm.', 'error');
+                            btn.prop('disabled', false).html('<i class="bi bi-check-circle-fill mr-1"></i> Lưu thay đổi');
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Lỗi hệ thống', 'Không thể kết nối đến máy chủ.', 'error');
+                        btn.prop('disabled', false).html('<i class="bi bi-check-circle-fill mr-1"></i> Lưu thay đổi');
+                    }
+                });
+            });
+        });
+    </script>
+}
