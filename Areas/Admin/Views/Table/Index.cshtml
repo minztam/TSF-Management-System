@@ -1,0 +1,234 @@
+﻿@{
+    ViewData["Title"] = "Sơ đồ bàn ăn";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/admin-user-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        /* 1. Cải tiến Grid linh hoạt hơn */
+        .table-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* 2. Nâng cấp Card bàn ăn */
+        .table-card {
+            background: #ffffff;
+            border-radius: 24px;
+            border: 1px solid #eef2f6;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+        }
+
+            .table-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05);
+            }
+
+            /* Border trạng thái dày hơn ở phía trên */
+            .table-card.available {
+                border-top: 6px solid #10b981;
+            }
+
+            .table-card.occupied {
+                border-top: 6px solid #f43f5e;
+            }
+
+            .table-card.reserved {
+                border-top: 6px solid #f59e0b;
+            }
+
+        /* 3. Badge thời gian cho bàn đang có khách */
+        .time-counter {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 50px;
+            background: rgba(244, 63, 94, 0.1);
+            color: #f43f5e;
+            display: flex;
+            align-items: center;
+        }
+
+        /* 4. Tabs lọc khu vực */
+        .area-filter {
+            background: #f1f5f9;
+            padding: 6px;
+            border-radius: 16px;
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .area-item {
+            padding: 8px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #64748b;
+        }
+
+            .area-item.active {
+                background: white;
+                color: #4361ee;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            }
+
+        /* 5. Nút thao tác nhanh */
+        .table-actions {
+            background: #f8fafc;
+            border-top: 1px solid #f1f5f9;
+            padding: 10px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-quick {
+            flex: 1;
+            padding: 8px;
+            border-radius: 10px;
+            border: none;
+            transition: 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .btn-quick-edit {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+            .btn-quick-edit:hover {
+                background: #dbeafe;
+            }
+
+        .btn-quick-del {
+            background: #fff1f2;
+            color: #e11d48;
+        }
+
+            .btn-quick-del:hover {
+                background: #ffe4e6;
+            }
+    </style>
+}
+
+<div class="container-fluid py-3">
+    @* --- HEADER & FILTER --- *@
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
+        <div>
+            <h2 class="h4 font-weight-bold text-dark mb-1">
+                <i class="bi bi-grid-3x3-gap-fill me-2 text-primary"></i>Sơ đồ bàn ăn
+            </h2>
+            <div class="area-filter mt-2">
+                <div class="area-item active">Tất cả</div>
+                <div class="area-item">Tầng trệt</div>
+                <div class="area-item">Sân vườn</div>
+                <div class="area-item">Phòng VIP</div>
+            </div>
+        </div>
+
+        <a href="@Url.Action("Create", "Table", new { area = "Admin" })" 
+           class="btn btn-primary btn-lg px-4 py-2 shadow rounded-pill font-weight-bold" 
+           style="font-size: 0.9rem;">
+            <i class="bi bi-plus-circle-fill me-2"></i>Thêm bàn mới
+        </a>
+    </div>
+
+    @* --- CHÚ THÍCH TRẠNG THÁI (Gọn hơn) --- *@
+    <div class="d-flex flex-wrap gap-4 mb-4 justify-content-center border-bottom pb-4">
+        <div class="small fw-bold"><i class="bi bi-circle-fill text-success me-2"></i>Sẵn sàng</div>
+        <div class="small fw-bold"><i class="bi bi-circle-fill text-danger me-2"></i>Đang phục vụ</div>
+        <div class="small fw-bold"><i class="bi bi-circle-fill text-warning me-2"></i>Đặt trước</div>
+    </div>
+
+    @* --- LƯỚI DANH SÁCH BÀN --- *@
+    <div class="table-grid">
+
+        <!-- Bàn Đang dùng (Có thêm bộ đếm thời gian) -->
+        <div class="table-card occupied shadow-sm">
+            <div class="time-counter">
+                <i class="bi bi-clock-history me-1"></i> 45'
+            </div>
+            <div class="p-4 text-center">
+                <div class="table-status-icon bg-soft-danger mx-auto">
+                    <i class="bi bi-people-fill fs-5"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">Bàn số 02</h5>
+                <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>Khu VIP</p>
+                <span class="badge bg-light text-dark border px-3">2 người</span>
+            </div>
+            <div class="table-actions">
+                <button class="btn-quick btn-quick-edit" title="Sửa"><i class="bi bi-pencil-square me-1"></i>Sửa</button>
+                <button class="btn-quick btn-quick-del btn-delete-ajax" title="Xóa"><i class="bi bi-trash3 me-1"></i>Xóa</button>
+            </div>
+        </div>
+
+        <!-- Bàn Trống -->
+        <div class="table-card available shadow-sm">
+            <div class="p-4 text-center">
+                <div class="table-status-icon bg-soft-success mx-auto">
+                    <i class="bi bi-check-lg fs-5"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">Bàn số 01</h5>
+                <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>Tầng trệt</p>
+                <span class="badge bg-light text-dark border px-3">4 người</span>
+            </div>
+            <div class="table-actions">
+                <button class="btn-quick btn-quick-edit"><i class="bi bi-pencil-square me-1"></i>Sửa</button>
+                <button class="btn-quick btn-quick-del btn-delete-ajax"><i class="bi bi-trash3 me-1"></i>Xóa</button>
+            </div>
+        </div>
+
+        <!-- Bàn Đặt trước -->
+        <div class="table-card reserved shadow-sm">
+            <div class="p-4 text-center">
+                <div class="table-status-icon bg-soft-warning mx-auto">
+                    <i class="bi bi-bookmark-star-fill fs-5"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">Bàn số 03</h5>
+                <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>Sân vườn</p>
+                <span class="badge bg-light text-dark border px-3">8 người</span>
+            </div>
+            <div class="table-actions">
+                <button class="btn-quick btn-quick-edit"><i class="bi bi-pencil-square me-1"></i>Sửa</button>
+                <button class="btn-quick btn-quick-del btn-delete-ajax"><i class="bi bi-trash3 me-1"></i>Xóa</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function () {
+            // Xử lý chuyển tab khu vực
+            $('.area-item').click(function() {
+                $('.area-item').removeClass('active');
+                $(this).addClass('active');
+                // Code lọc dữ liệu theo khu vực ở đây...
+            });
+
+            $('.btn-delete-ajax').click(function () {
+                Swal.fire({
+                    title: 'Xác nhận xóa bàn?',
+                    text: "Bạn không thể hoàn tác thao tác này!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#f43f5e',
+                    confirmButtonText: 'Đồng ý xóa',
+                    cancelButtonText: 'Hủy'
+                });
+            });
+        });
+    </script>
+}

@@ -15,6 +15,7 @@ namespace QuanLyQuanAn.Web.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<Ingredient> Ingredients { get; set; }
         public DbSet<ProductIngredient> ProductIngredients { get; set; }
+        public DbSet<Table> Tables { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -26,6 +27,10 @@ namespace QuanLyQuanAn.Web.Data
 
             modelBuilder.Entity<ProductIngredient>()
                 .HasKey(pi => new { pi.ProductId, pi.IngredientId });
+
+            modelBuilder.Entity<Table>()
+                .Property(t => t.Status)
+                .HasDefaultValue("Available");
         }
     }
 }
