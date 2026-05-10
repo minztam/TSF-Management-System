@@ -1,0 +1,123 @@
+﻿@model QuanLyQuanAn.Web.Areas.Admin.Models.Table.CreateTable
+
+@{
+    ViewData["Title"] = "Chỉnh sửa bàn ăn";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/Admin/admin-form.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 mb-4 mt-2">
+            <h1 class="h4 mb-0 text-gray-800 font-weight-bold">
+                <i class="bi bi-pencil-square mr-2 text-primary"></i> CHỈNH SỬA BÀN ĂN
+            </h1>
+            <p class="text-muted small">Cập nhật thông tin hoặc trạng thái cho @Model.Name</p>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm-custom card-form border-0">
+                <div class="card-body p-4">
+                    <form id="formEditTable">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="form-group mb-4">
+                            <label asp-for="Name" class="font-weight-bold mb-2">Tên bàn</label>
+                            <input asp-for="Name" class="form-control form-control-custom" />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Capacity" class="font-weight-bold mb-2">Sức chứa</label>
+                                    <input asp-for="Capacity" type="number" class="form-control form-control-custom" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="AreaName" class="font-weight-bold mb-2">Khu vực</label>
+                                    <select asp-for="AreaName" class="form-control form-control-custom">
+                                        <option value="Khu vực chung">Khu vực chung</option>
+                                        <option value="Sân vườn">Sân vườn</option>
+                                        <option value="Phòng VIP">Phòng VIP</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label asp-for="Status" class="font-weight-bold mb-2">Trạng thái bàn</label>
+                            <select asp-for="Status" class="form-control form-control-custom">
+                                <option value="Available">Sẵn sàng (Available)</option>
+                                <option value="Occupied">Đang có khách (Occupied)</option>
+                                <option value="Reserved">Đã đặt trước (Reserved)</option>
+                            </select>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a asp-action="Index" class="btn-back mr-2 text-decoration-none">Quay lại</a>
+                            <button type="button" id="btnUpdate" class="btn-save shadow-sm px-4">
+                                <i class="bi bi-cloud-arrow-up-fill mr-1"></i> Cập nhật thay đổi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.13/jquery.validate.unobtrusive.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#btnUpdate').click(function () {
+                const btn = $(this);
+                const form = $('#formEditTable');
+
+                if (!form.valid()) return false;
+
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-2"></span> Đang lưu...');
+
+                $.ajax({
+                    url: '@Url.Action("Edit", "Table")',
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (res) {
+                        if (res.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Thành công',
+                                text: res.message,
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = '@Url.Action("Index", "Table")';
+                            });
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message });
+                            btn.prop('disabled', false).html('<i class="bi bi-cloud-arrow-up-fill mr-1"></i> Cập nhật thay đổi');
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Lỗi!', 'Kết nối thất bại.', 'error');
+                        btn.prop('disabled', false).html('Cập nhật thay đổi');
+                    }
+                });
+            });
+        });
+    </script>
+}
